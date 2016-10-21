@@ -1,7 +1,7 @@
 {
   "name": "chill-logger",
   "version": "1.0.0",
-  "description": "Pretty simplified logging for your application",
+  "description": "Simplified logging for Docker for your application",
   "main": "logger.js",
   "scripts": {
     "coveralls": "cat coverage/lcov.info | coveralls",
