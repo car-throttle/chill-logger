@@ -30,6 +30,7 @@
     "logs"
   ],
   "devDependencies": {
+    "colors": "^1.1.2",
     "coveralls": "^2.11.4",
     "istanbul": "^0.4.1",
     "jscs": "^2.7.0",

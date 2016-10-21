@@ -5,8 +5,8 @@ function isObject(value) {
 }
 
 function Chill(opts) {
-  this.level = opts.level || 'info';
-  this.prefix = opts.name + '.';
+  this.level = opts.level || 'debug';
+  this.prefix = (opts.name || 'log') + '.';
   this.stream = opts.stream || process.stdout;
 }
 
@@ -14,7 +14,6 @@ Chill.prototype.debug = function () { return this._send('debug', arguments); };
 Chill.prototype.info  = function () { return this._send('info',  arguments); };
 Chill.prototype.warn  = function () { return this._send('warn',  arguments); };
 Chill.prototype.error = function () { return this._send('error', arguments); };
-Chill.prototype.fatal = function () { return this._send('fatal', arguments); };
 
 var LEVELS = { debug: 10, trace: 15, info:  20, warn:  30, error: 50 };
 
@@ -23,7 +22,6 @@ Chill.prototype._send = function (level, args) {
   var data = {};
 
   if (args[0] instanceof Error) {
-    level = 'error';
     data = module.exports.formatErr(args[0]);
   }
   else if (args.length === 1 && isObject(args[0])) {
@@ -48,7 +46,7 @@ Chill.prototype._write = function (tag, data) {
   this.stream.write(JSON.stringify([ this.prefix + tag, (new Date()).valueOf() / 1000, data ]) + '\n');
 };
 
-if (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') (function () {
+if ((process.env.NODE_ENV || 'development') === 'development') (function () {
   try {
     var colors = require('colors/safe');
     colors.setTheme({
@@ -79,7 +77,7 @@ if (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') (function (
 })();
 
 module.exports = function (opts) {
-  return new Chill(opts);
+  return new Chill(opts || {});
 };
 
 module.exports.formatErr = function (err) {
