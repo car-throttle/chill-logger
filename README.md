@@ -91,6 +91,32 @@ log.alert = function () {
 log.alert('This is an ALERT statement');
 ```
 
+### Errors
+
+This logger will format errors into plain objects by passing them through the `formatErr` function that's provided.
+You can override this method if you want to include additional properties:
+
+```js
+var logger = require('chill-logger');
+var os = require('os');
+
+module.exports = logger({
+  name: 'my-awesome-project',
+  level: process.env.LOG_LEVEL || 'debug' // Allows you to override it at runtime
+});
+
+logger.formatErr = function (err) {
+  return {
+    code: err.code || null,
+    name: err.name,
+    message: err.message,
+    instance_id: os.hostname(),
+    query: err.query || null,
+    stack: err.stack
+  };
+};
+```
+
 ## One more thing...
 
 Feel free to [open an issue](https://github.com/car-throttle/chill-logger/issues), and this is an open-source project
