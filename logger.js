@@ -1,3 +1,4 @@
+var crypto = require('crypto');
 var util = require('util');
 
 function isObject(value) {
@@ -46,6 +47,7 @@ Chill.prototype._write = function (tag, data) {
   this.stream.write(JSON.stringify([ this.prefix + tag, (new Date()).valueOf() / 1000, data ]) + '\n');
 };
 
+/* istanbul ignore if */
 if ((process.env.NODE_ENV || 'development') === 'development') (function () {
   try {
     var colors = require('colors/safe');
@@ -86,5 +88,51 @@ module.exports.formatErr = function (err) {
     name: err.name || 'Error',
     message: err.message,
     stack: err.stack
+  };
+};
+
+module.exports.middleware = function (logger, opts) {
+  opts = opts || {};
+
+  /* istanbul ignore next */
+  opts.generateHeaderId = opts.generateHeaderId || function () { return crypto.randomBytes(12).toString('hex'); };
+  opts.header = opts.header || 'X-Request-ID';
+
+  opts.req = opts.req || function (req) {
+    return {
+      headers: req.headers,
+      method: req.method,
+      path: req.path,
+      qs: JSON.stringify(req.query),
+      url: req.originalUrl || req.url,
+    };
+  };
+
+  opts.res = opts.res || function (res) {
+    return {
+      statusCode: res.statusCode,
+      headers: res._headers || {},
+    };
+  };
+
+  opts.format = opts.format || null;
+
+  return function (req, res, next) {
+    var id = req.headers[opts.header.toLowerCase()] = opts.generateHeaderId();
+    res.setHeader(opts.header, id);
+
+    var log = { id: id };
+    // Create a request object
+    log.req = opts.req(req);
+
+    res.on('finish', function () {
+      // Create a response object
+      log.res = opts.res(res);
+      // Optionally format
+      opts.format && opts.format(log, req, res);
+      logger.info('req', log);
+    });
+
+    next();
   };
 };

@@ -2,6 +2,7 @@ var assert = require('assert');
 var rewire = require('rewire');
 
 describe('Chill-Logger', function () {
+  /* jshint maxlen:false */
   var logger = rewire('./logger');
   var Chill = logger.__get__('Chill');
 
@@ -57,53 +58,126 @@ describe('Chill-Logger', function () {
     });
   });
 
+  describe('middleware', function () {
+    var output = [];
+    var log = logger({ stream: { write: function (input) { output.push(input); } } });
+    afterEach(function () {
+      output = [];
+    });
+
+    var assertLog = function (fn, expected) {
+      var actual;
+      if (output.length) {
+        actual = (output.shift() || '').split(',');
+        actual.splice(1, 1);
+        actual = actual.join(',').trim();
+      }
+      assert.equal(actual, expected);
+    };
+
+    var fakeReq = {
+      headers: {
+        accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'accept-language': 'en-GB,en;q=0.8,en-US;q=0.6',
+        'cache-control': 'no-cache',
+        connection: 'keep-alive',
+        dnt: '1',
+        pragma: 'no-cache',
+        'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_5) AppleWebKit/537.36 (KHTML, like Gecko ) Chrome/31.0.1650.63 Safari/537.36',
+      },
+      method: 'GET',
+      path: '/',
+      query: {},
+      url: '/',
+    };
+    var fakeRes = {
+      status: 200,
+      headers: {
+        'x-powered-by': 'love'
+      },
+      on: function (type, fn) {
+        if (type === 'finish') return fn();
+      },
+      setHeader: function (header, value) {
+        fakeRes.headers[header] = value;
+      }
+    };
+
+    it('should create a middleware function', function () {
+      var middleware = logger.middleware(log);
+      assert.equal(middleware.length, 3);
+    });
+
+    var middleware = logger.middleware(log, {
+      generateHeaderId: function () { return 'UUID'; },
+    });
+
+    it('should execute the middleware correctly', function (done) {
+      middleware(fakeReq, fakeRes, function () {
+        assertLog(null, '["log.req",{"id":"UUID","req":{"headers":{"accept":"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8","accept-language":"en-GB,en;q=0.8,en-US;q=0.6","cache-control":"no-cache","connection":"keep-alive","dnt":"1","pragma":"no-cache","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_5) AppleWebKit/537.36 (KHTML, like Gecko ) Chrome/31.0.1650.63 Safari/537.36","x-request-id":"UUID"},"method":"GET","path":"/","qs":"{}","url":"/"},"res":{"headers":{}}}]');
+        done();
+      });
+    });
+  });
+
   describe('logger', function () {
-    var log = logger();
-    log._write = function (tag, data) { return JSON.stringify([ this.prefix + tag, data ]); };
+    var output = [];
+    var log = logger({ stream: { write: function (input) { output.push(input); } } });
+    afterEach(function () {
+      output = [];
+    });
+
+    var assertLog = function (fn, expected) {
+      var actual;
+      if (output.length) {
+        actual = (output.shift() || '').split(',');
+        actual.splice(1, 1);
+        actual = actual.join(',').trim();
+      }
+      assert.equal(actual, expected);
+    };
 
     it('should create debug messages', function () {
-      assert.equal(log.debug('Hello, world!'), '["log.debug",{"message":"Hello, world!"}]');
+      assertLog(log.debug('Hello, world!'), '["log.debug",{"message":"Hello, world!"}]');
     });
 
     it('should create info messages', function () {
-      assert.equal(log.info('Hello, world!'), '["log.info",{"message":"Hello, world!"}]');
+      assertLog(log.info('Hello, world!'), '["log.info",{"message":"Hello, world!"}]');
     });
 
     it('should create warn messages', function () {
-      assert.equal(log.warn('Hello, world!'), '["log.warn",{"message":"Hello, world!"}]');
+      assertLog(log.warn('Hello, world!'), '["log.warn",{"message":"Hello, world!"}]');
     });
 
     it('should create error messages', function () {
-      assert.equal(log.error('Hello, world!'), '["log.error",{"message":"Hello, world!"}]');
+      assertLog(log.error('Hello, world!'), '["log.error",{"message":"Hello, world!"}]');
     });
 
     it('should format errors', function () {
       var err = new Error('Something old, something new');
       err.stack = 'ERROR-STACK';
 
-      assert.equal(log.error(err), '["log.error",{"code":null,"name":"Error","message":"Something old, ' +
-        'something new","stack":"ERROR-STACK"}]');
+      assertLog(log.error(err), '["log.error",{"code":null,"name":"Error","message":"Something old, something new","stack":"ERROR-STACK"}]');
     });
 
     it('should format objects', function () {
-      assert.equal(log.info({ hello: 'world' }), '["log.info",{"hello":"world"}]');
+      assertLog(log.info({ hello: 'world' }), '["log.info",{"hello":"world"}]');
     });
 
     it('should format errors with a tag', function () {
       var err = new Error('Something old, something new');
       err.stack = 'ERROR-STACK';
 
-      assert.equal(log.info('something', err), '["log.something",{"code":null,"name":"Error","message":"Something ' +
-        'old, something new","stack":"ERROR-STACK"}]');
+      assertLog(log.info('something', err), '["log.something",{"code":null,"name":"Error","message":"Something old, something new","stack":"ERROR-STACK"}]');
     });
 
     it('should format objects with a tag', function () {
-      assert.equal(log.info('something', { hello: 'world' }), '["log.something",{"hello":"world"}]');
+      assertLog(log.info('something', { hello: 'world' }), '["log.something",{"hello":"world"}]');
     });
 
     it('should ignore logs under its level', function () {
       var log2 = logger({ level: 'info' });
-      assert.equal(log2.debug({ hello: 'world' }), undefined);
+      assertLog(log2.debug({ hello: 'world' }), undefined);
     });
   });
 });
