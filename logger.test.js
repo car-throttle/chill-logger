@@ -114,7 +114,7 @@ describe('Chill-Logger', function () {
 
     it('should execute the middleware correctly', function (done) {
       middleware(fakeReq, fakeRes, function () {
-        assertLog(null, '["log.req",{"id":"UUID","req":{"headers":{"accept":"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8","accept-language":"en-GB,en;q=0.8,en-US;q=0.6","cache-control":"no-cache","connection":"keep-alive","dnt":"1","pragma":"no-cache","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_5) AppleWebKit/537.36 (KHTML, like Gecko ) Chrome/31.0.1650.63 Safari/537.36","x-request-id":"UUID"},"method":"GET","path":"/","qs":"{}","url":"/"},"res":{"headers":{}}}]');
+        assertLog(null, '["log.req",{"id":"UUID","req":{"method":"GET","url":"/","headers":{"accept":"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8","accept-language":"en-GB,en;q=0.8,en-US;q=0.6","cache-control":"no-cache","connection":"keep-alive","dnt":"1","pragma":"no-cache","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_5) AppleWebKit/537.36 (KHTML, like Gecko ) Chrome/31.0.1650.63 Safari/537.36","x-request-id":"UUID"},"path":"/","qs":"{}","body":"{}"},"res":{"headers":{}}}]');
         done();
       });
     });

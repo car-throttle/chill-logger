@@ -100,11 +100,12 @@ module.exports.middleware = function (logger, opts) {
 
   opts.req = opts.req || function (req) {
     return {
-      headers: req.headers,
       method: req.method,
+      url: req.originalUrl || req.url,
+      headers: req.headers,
       path: req.path,
       qs: JSON.stringify(req.query),
-      url: req.originalUrl || req.url,
+      body: (!!req.body ? JSON.stringify(req.body) : '{}'),
     };
   };
 
