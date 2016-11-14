@@ -6,7 +6,9 @@ Working with Docker & ECS presents some interesting challenges & some interestin
 [through Docker & Fluentd](https://docs.docker.com/engine/admin/logging/fluentd/). However this requires a specific
 format to be printed out to *stdout*, so this module prints logs in a specific format for Fluentd to consume.
 
-![Example output](./output.png)
+![Example output](./img/log.png)
+
+![Example output](./img/server.png)
 
 In development, your logs are formatted slightly to add [color](https://www.npmjs.com/package/colors) (optionally) and
 to add clearer spacing. In production they are minified (well, just not padded out) and line-by-line they will be sent
@@ -116,6 +118,85 @@ logger.formatErr = function (err) {
   };
 };
 ```
+
+### Middleware
+
+**chill-logger** offers a way to create a HTTP request logger middleware function using your logger to output
+the request.
+
+![Example output](./img/server.png)
+
+```js
+var chill = require('chill-logger');
+var express = require('express');
+
+var app = express();
+var logger = chill();
+
+app.use(chill.middleware(logger));
+
+app.get('/', function (req, res) {
+  res.send('Welcome to my app!');
+});
+```
+
+Requests get logged into `.req` at the `info` level (so if you set the log-level to `warn` or above then you won't see
+any requests being logged - useful for integration tests!) and the request & response are transformed into plain objects
+describing the many properties of a request.
+
+```json
+{
+  "id": "${Generated-ID-associated-with-this-request}",
+  "req": {
+    "method": "GET",
+    "url": "/",
+    "headers": {
+      "user-agent": "HTTPie/0.9.6",
+      "x-request-id": "${Generated-ID-associated-with-this-request}"
+    },
+    "path": "/",
+    "qs": "{}",
+    "body": "{}"
+  },
+  "res": {
+    "statusCode": 200,
+    "headers": {
+      "x-powered-by": "Express",
+      "x-request-id": "${Generated-ID-associated-with-this-request}"
+    }
+  }
+}
+```
+
+There are a few options to let you customise the logger, so you can get/set/override various properties:
+
+```js
+chill.middleware(logger, {
+  generateHeaderId: uuid.v4, // A function that returns a unique ID (defaults to crypto.randomBytes(12))
+  header: 'X-Awesome-Req-ID', // A function to set the name of the header
+  req: function (req) {}, // Build your own req object for this request, useful to omit headers etc.
+  res: function (res) {}, // Build your own res object for this request, useful to omit headers etc.
+  format: function (log, req, res) {}, // Edit the logged request one more time once the response has been sent
+})
+```
+
+Usually, if you want to add information to the log after the request has completed, and logins/sessions/events have
+occurred, then you'd want to use `format` over `req` or `res`:
+
+```js
+chill.middleware(logger, {
+  format: function (log, req, res) {
+    // "log" is an plain object about to be logged, with req and res properties for you to modify as you please
+    // "req" and "res" are as expected: the req and res associated with this request
+    if (req.user && req.user.id) {
+      log.req.user = { id: req.user.id };
+    }
+  },
+})
+```
+
+Please note: `req` executes as the request hits this middleware, whereas `res` and `format` execute after the response
+has been sent by the HTTP server. Choose your logic wisely!
 
 ## One more thing...
 
