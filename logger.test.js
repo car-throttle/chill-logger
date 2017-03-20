@@ -179,5 +179,10 @@ describe('Chill-Logger', function () {
       var log2 = logger({ level: 'info' });
       assertLog(log2.debug({ hello: 'world' }), undefined);
     });
+
+    it('should ignore all logs if the ignore-all level is passed', function () {
+      var log2 = logger({ level: 'ignore-all' });
+      assertLog(log2.error({ message: 'An important error here' }), undefined);
+    });
   });
 });

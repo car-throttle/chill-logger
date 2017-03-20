@@ -19,7 +19,7 @@ Chill.prototype.error = function () { return this._send('error', arguments); };
 var LEVELS = { debug: 10, trace: 15, info:  20, warn:  30, error: 50 };
 
 Chill.prototype._send = function (level, args) {
-  if (LEVELS[level] && LEVELS[level] < LEVELS[this.level]) return;
+  if (this.level === 'ignore-all' || (LEVELS[level] && LEVELS[level] < LEVELS[this.level])) return;
   var data = {};
 
   if (args[0] instanceof Error) {

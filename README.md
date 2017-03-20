@@ -33,7 +33,7 @@ Without *colors*, your logs will be formatted into the same layout but there won
 The easiest way to use this is to define a file for your logger:
 
 ```js
-var logger = require('chill-logger')({
+const logger = require('chill-logger')({
   name: 'my-awesome-project',
   level: process.env.LOG_LEVEL || 'debug' // Allows you to override it at runtime
 });
@@ -43,7 +43,7 @@ More "advanced" usage could look like:
 
 ```js
 // In logger.js
-var logger = require('chill-logger');
+const logger = require('chill-logger');
 
 module.exports = logger({
   name: 'my-awesome-project',
@@ -55,14 +55,14 @@ module.exports.alert = function () {
 };
 
 // In another file
-var logger = require('./logger')
+const logger = require('./logger')
 logger.alert('Something needs someones attention!');
 ```
 
 ## API
 
 ```js
-var log = require('chill-logger')();
+const log = require('chill-logger')();
 // By default, the name for the logger is "log"
 // And by default the log level is "debug", to allow everything through
 
@@ -99,8 +99,8 @@ This logger will format errors into plain objects by passing them through the `f
 You can override this method if you want to include additional properties:
 
 ```js
-var logger = require('chill-logger');
-var os = require('os');
+const logger = require('chill-logger');
+const os = require('os');
 
 module.exports = logger({
   name: 'my-awesome-project',
@@ -127,11 +127,11 @@ the request.
 ![Example output](./img/server.png)
 
 ```js
-var chill = require('chill-logger');
-var express = require('express');
+const chill = require('chill-logger');
+const express = require('express');
 
-var app = express();
-var logger = chill();
+const app = express();
+const logger = chill();
 
 app.use(chill.middleware(logger));
 
@@ -168,7 +168,7 @@ describing the many properties of a request.
 }
 ```
 
-There are a few options to let you customise the logger, so you can get/set/override various properties:
+There are a few options to let you customise the logger, so you can get/set/override constious properties:
 
 ```js
 chill.middleware(logger, {
@@ -197,6 +197,23 @@ chill.middleware(logger, {
 
 Please note: `req` executes as the request hits this middleware, whereas `res` and `format` execute after the response
 has been sent by the HTTP server. Choose your logic wisely!
+
+### Silence all
+
+If you are looking to test code using this module, and you want to silence the output, set the `level` to `ignore-all`
+and all output will be silenced.
+
+```js
+const logger = require('chill-logger');
+
+module.exports = logger({
+  name: 'my-awesome-project',
+  level: process.env.LOG_LEVEL || 'debug',
+});
+```
+```sh
+$ LOG_LEVEL=ignore-all node test/runner.js
+```
 
 ## One more thing...
 
